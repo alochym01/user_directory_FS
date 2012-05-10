@@ -1,3 +1,4 @@
 Testing version 0.1
 debug community between freeswitch and http server:
+http server and freeswitch run on same server
 ngrep -W byline -d lo
