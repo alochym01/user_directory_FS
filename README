@@ -2,3 +2,30 @@ Testing version 0.1
 debug community between freeswitch and http server:
 http server and freeswitch run on same server
 ngrep -W byline -d lo
+
+Cach cai dat Freeswitch bang goi rpm
+Cu phap cho lenh ln: ln –s source destination
+1.	freeswitch-1.0.6-1.i386.rpm 
+2.	freeswitch-codec-passthru-g729-1.0.6-1.i386.rpm 
+3.	freeswitch-devel-1.0.6-1.i386.rpm 
+4.	freeswitch-lang-en-1.0.6-1.i386.rpm 
+5.	freeswitch-lua-1.0.6-1.i386.rpm 
+6.	freeswitch-sounds-en-us-callie-8000-1.0.18.noarch.rpm 
+7.	freeswitch-sounds-music-8000-1.0.8-2.noarch.rpm 
+8.	freeswitch-spidermonkey-1.0.6-1.i386.rpm
+
+Buoc 1: cai dat HDH centos version 5.7
+Buoc 2: cai dat cac goi dependency
+•	yum install -y alsa-lib curl libidn libogg  libtheora  libvorbis perl postgresql-libs  unixODBC-libs
+Buoc 3: cai dat freeswitch: 
+1.	rpm -ivh freeswitch-1.0.6-1.i386.rpm freeswitch-devel-1.0.6-1.i386.rpm freeswitch-codec-passthru-g729-1.0.6-1.i386.rpm freeswitch-lang-en-1.0.6-1.i386.rpm freeswitch-lua-1.0.6-1.i386.rpm freeswitch-sounds-en-us-callie-8000-1.0.18.noarch.rpm freeswitch-sounds-music-8000-1.0.8-2.noarch.rpm freeswitch-spidermonkey-1.0.6-1.i386.rpmBuoc 4: chkconfig –-add freeswitch 
+
+ chkconfig –-level 345 freeswitch on
+Buoc 5: chown freeswitch:daemon –R /opt
+Buoc 6: reboot server 
+
+ ktra coi freeswitch co tu start hay ko, cau lenh ktra:
+1.	netstat –nlp | grep 5060
+2.	ps –ef | grep freeswitch
+3.	/etc/init.d/freeswitch status
+4.	Check IO cua harddisk, network: iostats –n -1
