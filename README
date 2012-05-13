@@ -30,3 +30,77 @@ Buoc 6: reboot server
   2.	ps –ef | grep freeswitch
   3.	/etc/init.d/freeswitch status
   4.	Check IO cua harddisk, network: iostats –n -1
+
+
+
+Enable Freeswitch use mysql instead of sqlite
+
+  1: yum install unixODBC-devel mysql-connector-odbc mysql-server
+
+  2: edit file /etc/odbcinst.ini:
+[MySQL]
+Description     = ODBC for MySQL
+#check file libmyodbc3_r.so + libodbcmyS.so in the folder /usr/lib
+Driver          = /usr/lib/libmyodbc3_r.so
+Setup           = /usr/lib/libodbcmyS.so
+Driver64        = /usr/lib64/libmyodbc3_r.so
+Setup64         = /usr/lib64/libodbcmyS.so
+FileUsage       = 1
+
+  3: edit file /etc/odbc.ini:
+[freeswitch]
+Driver          = MySQL
+SERVER          = 127.0.0.1
+PORT            = 3306
+DATABASE        = freeswitch
+OPTION          = 67108864
+Socket          = /var/lib/mysql/mysql.sock
+USER            = test2            # insert your db username
+PASSWORD        = pass    # insert your db password here
+
+  4: edit file /opt/freeswitch/conf/sip_profiles/internal.xml
+    <!--<param name="odbc-dsn" value="dsn:user:pass"/>--> change to     <param name="odbc-dsn" value="freeswitch:test2:pass"/>
+mysql> show tables;
++-------------------------------------+
+| Tables_in_freeswitch                |
++-------------------------------------+
+| sip_authentication                  |
+| sip_dialogs                         |
+| sip_presence                        |
+| sip_recovery                        |
+| sip_registrations                   |
+| sip_shared_appearance_dialogs       |
+| sip_shared_appearance_subscriptions |
+| sip_subscriptions                   |
++-------------------------------------+
+
+  5: if you dont edit file /opt/freeswitch/conf/autoload_configs/switch.conf.xml and change the below line:
+    <!-- <param name="core-db-dsn" value="dsn:username:password" /> -->
+    <param name="core-db-dsn" value="freeswitch:test2:pass" />
+
+ [root@localhost freeswitch]# ls  db/
+call_limit.db  core.db  fifo.db  sofia_reg_external.db  sofia_reg_internal-ipv6.db  voicemail_default.db
+    
+  and your database will be the result as step 4
+
+  if you changed and your database look like below
+ mysql> show tables;
++-------------------------------------+
+| Tables_in_freeswitch                |
++-------------------------------------+
+| aliases                             |
+| calls                               |
+| channels                            |
+| complete                            |
+| interfaces                          |
+| nat                                 |
+| sip_authentication                  |
+| sip_dialogs                         |
+| sip_presence                        |
+| sip_recovery                        |
+| sip_registrations                   |
+| sip_shared_appearance_dialogs       |
+| sip_shared_appearance_subscriptions |
+| sip_subscriptions                   |
+| tasks                               |
++-------------------------------------+
