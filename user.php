@@ -4,19 +4,17 @@
 #CREATE TABLE subscriber (
 #  id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,\
 #  username CHAR(64) DEFAULT '' NOT NULL,\
-#  account_code CHAR(64)DEFAULT '' NOT NULL, \
 #  context CHAR(64) DEFAULT '' NOT NULL,\
 #  toll_allow CHAR(64) DEFAULT '' NULL,\
 #  password CHAR(25) DEFAULT '' NOT NULL \
 #) ENGINE=MyISAM;
 
 #insert data into subscriber table
-#insert into subscriber(username, context, password, toll_allow, account_code)\
-#value("2000", "default", "1234", "local", 2000)
+#insert into subscriber(username, context, password, toll_allow)\
+#value("2000", "default", "1234", "local")
 
 #description:
 #username: username of sip account
-#account_code:  is default = sql, its purpose is insert to mysql
 #password: password of sip account
 #context: is dialplan of sip account(default is context default. check the file /opt/freeswitch/conf/dialplan/default.xml)
 #toll_allow: is class of service of sip account: 
@@ -75,7 +73,6 @@
     echo '        </params>' . "\n";
     echo '        <variables>' . "\n";
     echo '          <variable name="toll_allow" value="' . $mysql_result['toll_allow'] . '"/>' . "\n" ;
-    echo '          <variable name="accountcode" value="' . $mysql_result['account_code'] . '"/>' . "\n" ;
     echo '          <variable name="user_context" value="' . $mysql_result['context'] . '"/>' . "\n" ;
     echo '        </variables>' . "\n";
     echo '      </user>' . "\n";
@@ -153,7 +150,6 @@
 #       <variables>
 #         <variable name="toll_allow" value="local"/>
 #         <variable name="user_context" value="default"/>
-#         <variable name="accountcode" value="sql"/>
 #       </variables>
 #     </user>
 #   </domain>
