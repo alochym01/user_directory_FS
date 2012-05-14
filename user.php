@@ -16,7 +16,7 @@
 
 #description:
 #username: username of sip account
-#account_code:  is the same as username, its purpose is use to insert cdr into mysql
+#account_code:  is default = sql, its purpose is insert to mysql
 #password: password of sip account
 #context: is dialplan of sip account(default is context default. check the file /opt/freeswitch/conf/dialplan/default.xml)
 #toll_allow: is class of service of sip account: 
@@ -153,7 +153,7 @@
 #       <variables>
 #         <variable name="toll_allow" value="local"/>
 #         <variable name="user_context" value="default"/>
-#         <variable name="accountcode" value="2000"/>
+#         <variable name="accountcode" value="sql"/>
 #       </variables>
 #     </user>
 #   </domain>
