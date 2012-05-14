@@ -104,3 +104,29 @@ call_limit.db  core.db  fifo.db  sofia_reg_external.db  sofia_reg_internal-ipv6.
 | sip_subscriptions                   |
 | tasks                               |
 +-------------------------------------+
+
+
+push CDR log into mysql:
+  1. create tables CDR to store cdr 
+ CREATE TABLE cdr (
+   caller_id_name varchar(30) DEFAULT NULL,
+   caller_id_number varchar(30) DEFAULT NULL,
+   destination_number varchar(30) DEFAULT NULL,
+   context varchar(20) DEFAULT NULL,
+   start_stamp datetime DEFAULT NULL,
+   answer_stamp datetime DEFAULT NULL,
+   end_stamp datetime DEFAULT NULL,
+   duration int(11) DEFAULT NULL,
+   billsec int(11) DEFAULT NULL,
+   hangup_cause varchar(50) DEFAULT NULL,
+   uuid varchar(100) DEFAULT NULL,
+   bleg_uuid varchar(100) DEFAULT NULL,
+   accountcode varchar(10) DEFAULT NULL,
+   domain_name varchar(100) DEFAULT NULL
+ )ENGINE=MyISAM;
+  2. run command:
+    2.1 in shell mode: fs_cli -x 'fsctl send_sighup' 
+    2.2 command 'fsctl send_sighup in freeswitch mode 
+    2.3 you can use the telnet IP of freeswitch port 8021 with pass ClueCon
+  3. write the script to load the Master.csv.YY-MM-DD-Hour-Minite-second into mysql
+  4. create crontab to execute the step 2 + step 3 in 5min/1hour/1day
