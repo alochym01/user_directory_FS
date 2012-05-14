@@ -128,7 +128,7 @@ push CDR log into mysql:
     2.2 command 'fsctl send_sighup in freeswitch mode 
     2.3 you can use the telnet IP of freeswitch port 8021 with pass ClueCon
 
-  3. write the script to load the Master.csv.YY-MM-DD-Hour-Minite-second into mysql
+  3. write the bash script and python script to load the Master.csv.YY-MM-DD-Hour-Minite-second into mysql
 mysql_db.py
 import os
 import time
