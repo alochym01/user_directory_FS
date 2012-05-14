@@ -15,14 +15,18 @@ Cu phap cho lenh ln: ln –s source destination
   8.	freeswitch-spidermonkey-1.0.6-1.i386.rpm
 
 Buoc 1: cai dat HDH centos version 5.7
+
 Buoc 2: cai dat cac goi dependency
   •	yum install -y alsa-lib curl libidn libogg  libtheora  libvorbis perl postgresql-libs  unixODBC-libs
+
 Buoc 3: cai dat freeswitch: 
   1.	rpm -ivh freeswitch-1.0.6-1.i386.rpm freeswitch-devel-1.0.6-1.i386.rpm freeswitch-codec-passthru-g729-1.0.6-1.i386.rpm freeswitch-lang-en-1.0.6-1.i386.rpm freeswitch-lua-1.0.6-1.i386.rpm freeswitch-sounds-en-us-callie-8000-1.0.18.noarch.rpm freeswitch-sounds-music-8000-1.0.8-2.noarch.rpm freeswitch-spidermonkey-1.0.6-1.i386.rpm
 
 Buoc 4: chkconfig –-add freeswitch 
  chkconfig –-level 345 freeswitch on
+
 Buoc 5: chown freeswitch:daemon –R /opt
+
 Buoc 6: reboot server 
 
  ktra coi freeswitch co tu start hay ko, cau lenh ktra:
@@ -30,8 +34,6 @@ Buoc 6: reboot server
   2.	ps –ef | grep freeswitch
   3.	/etc/init.d/freeswitch status
   4.	Check IO cua harddisk, network: iostats –n -1
-
-
 
 Enable Freeswitch use mysql instead of sqlite
 
@@ -113,22 +115,21 @@ push CDR log into mysql:
    caller_id_number varchar(30) DEFAULT NULL,
    destination_number varchar(30) DEFAULT NULL,
    context varchar(20) DEFAULT NULL,
-   start_stamp datetime DEFAULT NULL,
-   answer_stamp datetime DEFAULT NULL,
-   end_stamp datetime DEFAULT NULL,
-   duration int(11) DEFAULT NULL,
-   billsec int(11) DEFAULT NULL,
-   hangup_cause varchar(50) DEFAULT NULL,
-   uuid varchar(100) DEFAULT NULL,
-   bleg_uuid varchar(100) DEFAULT NULL,
-   accountcode varchar(10) DEFAULT NULL,
-   domain_name varchar(100) DEFAULT NULL
+   start_stamp varchar(64) DEFAULT NULL,
+   answer_stamp varchar(64) DEFAULT NULL,
+   end_stamp varchar(64) DEFAULT NULL,
+   duration varchar(64) DEFAULT NULL,
+   billsec varchar(64) DEFAULT NULL,
+   hangup_cause varchar(50) DEFAULT NULL
  )ENGINE=MyISAM;
+
   2. run command:
     2.1 in shell mode: fs_cli -x 'fsctl send_sighup' 
     2.2 command 'fsctl send_sighup in freeswitch mode 
     2.3 you can use the telnet IP of freeswitch port 8021 with pass ClueCon
+
   3. write the script to load the Master.csv.YY-MM-DD-Hour-Minite-second into mysql
+mysql_db.py
 import os
 import time
 #wait 30 second for the /opt/freeswitch/bin/fs_cli -x 'fsctl send_sighup' complete
@@ -169,3 +170,6 @@ for i in dirList:
 con.close()
 
   4. create crontab to execute the step 2 + step 3 in 5min/1hour/1day
+     the script look like this:(test.sh) and set the test.sh can run via chmod +x test.sh
+        /opt/freeswitch/bin/fs_cli -x 'fsctl send_sighup'
+        python /opt/freeswitch/scripts/mysql_db.py
