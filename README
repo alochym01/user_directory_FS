@@ -131,8 +131,8 @@ push CDR log into mysql:
   3. write the script to load the Master.csv.YY-MM-DD-Hour-Minite-second into mysql
 import os
 import time
-#wait 40 second for the /opt/freeswitch/bin/fs_cli -x 'send_sighup' complete
-#time.sleep(40)
+#wait 30 second for the /opt/freeswitch/bin/fs_cli -x 'fsctl send_sighup' complete
+time.sleep(30)
 import MySQLdb as mysql
 
 path = "/opt/freeswitch/log/cdr-csv/"
@@ -157,13 +157,15 @@ cur = con.cursor()
 for i in dirList:
     #path to file cdr-csv...
     file_name = path+i
-    f = open(file_name, 'r')
-    for line in f:
-        a=line.split(',')
-        sql_statement = "INSERT INTO cdr(caller_id_name, caller_id_number, destination_number, context, start_stamp, answer_stamp, end_stamp, duration, billsec, hangup_cause) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        cur.execute(sql_statement,(a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9]))
-    f.close()
+    if(file_name != "/opt/freeswitch/log/cdr-csv/Master.csv"):
+        f = open(file_name, 'r')
+        for line in f:
+            a=line.split(',')
+            sql_statement = "INSERT INTO cdr(caller_id_name, caller_id_number, destination_number, context, start_stamp, answer_stamp, end_stamp, duration, billsec, hangup_cause) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            cur.execute(sql_statement,(a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9]))
+        f.close()
+        #delete file cdr
+        os.remove(file_name)
 con.close()
-
 
   4. create crontab to execute the step 2 + step 3 in 5min/1hour/1day
