@@ -1,0 +1,48 @@
+cai dat unbound dns
+
+	1.	unbound.conf:
+	#
+# See unbound.conf(5) man page.
+#
+# this is a comment.
+
+#Use this to include other text into the file.
+#include: "otherfile.conf"
+
+# The server clause sets the main parameters.
+server:
+        verbosity: 1
+        statistics-interval: 0
+        statistics-cumulative: no
+        extended-statistics: yes
+        num-threads: 2
+         interface: 0.0.0.0
+        # port to answer queries from
+         port: 53
+        # Enable IPv4, "yes" or "no".
+         do-ip4: yes
+        # Enable IPv6, "yes" or "no".
+        do-ip6: no
+        # Enable UDP, "yes" or "no".
+         do-udp: yes
+        # Enable TCP, "yes" or "no".
+         do-tcp: no
+        local-zone: "sia-HCM1CA146.fpt.net" static
+        local-data: "sia-HCM1CA146.fpt.net IN A 118.69.239.242"
+        local-data-ptr: "118.69.239.242 sia-HCM1CA146.fpt.net"
+
+
+# Remote control config section.
+remote-control:
+        control-enable: yes
+        # unbound server key file.
+        server-key-file: "/etc/unbound/unbound_server.key"
+        # unbound server certificate file.
+        server-cert-file: "/etc/unbound/unbound_server.pem"
+        # unbound-control key file.
+        control-key-file: "/etc/unbound/unbound_control.key"
+        # unbound-control certificate file.
+        control-cert-file: "/etc/unbound/unbound_control.pem"
+ forward-zone:
+        name: "."
+        forward-addr: 8.8.8.8
