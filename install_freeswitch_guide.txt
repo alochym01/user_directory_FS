@@ -26,7 +26,7 @@ config freeswitch use http cho user
 		<include>
 		  <gateway name="sia-HCM1CA146.fpt.net">		  
 			<param name="username" value="0873002769"/>
-			<param name="password" value="abc0873002769"/>
+			<param name="password" value="0873002769"/>
 			<param name="expire-seconds" value="3600"/>
 			<param name="register" value="true"/>
 			<param name="retry-seconds" value="30"/>
@@ -36,9 +36,233 @@ config freeswitch use http cho user
 		</include>
 
 
+  8: routing cho incomming call from FPT using mod_easyroute
+
+<configuration name="easyroute.conf" description="EasyRoute Module">
+  <settings>
+    <!-- These are kind Obvious -->
+    <param name="db-username" value="freeswitch"/>
+    <param name="db-password" value="pass"/>
+    <param name="db-dsn" value="freeswitch"/>
+
+#neu lookup tren database ma khong co so DID thi gia tri tra ve la sofia/default/0873002679@192.168.66.6
+    <!-- Default Technology and profile -->
+    <param name="default-techprofile" value="sofia/default"/>
+    <!-- IP or Hostname of Default Route -->
+    <param name="default-gateway" value="192.168.66.6"/>
+
+    <!-- Number of times to retry ODBC connection on connection problems, default is 120 -->
+    <param name="odbc-retries" value="120"/>
+
+  </settings>
+</configuration>
+
+gateway_id: dung de cho table numbers tham chieu toi
+gateway_ip:
+1. co the la IP cua local server freeswitch
+2. co the la IP cua sip trunk.
+INSERT INTO `gateways` VALUES (1,'172.30.41.43','client1',50,'sofia/internal');
+CREATE TABLE `gateways` (
+`gateway_id` int(10) unsigned NOT NULL auto_increment,
+`gateway_ip` varchar(16) NOT NULL,
+`group` varchar(15) NOT NULL,
+`limit` int(10) unsigned NOT NULL,
+`techprofile` varchar(128) NOT NULL,
+  PRIMARY KEY  (`gateway_id`),
+  KEY `gateway_ip` (`gateway_ip`,`group`)
+  ) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='Gateways Table';
+
+so bi goi la 0873002769 thi se translate thanh so 1000, sau do dua tren gateway_id de quay so goi den : sofia/internal/1000@172.30.41.43
+INSERT INTO `numbers` VALUES (4,3,'0873002769','9999','1000'); 
+CREATE TABLE `numbers` (
+`number_id` int(10) unsigned NOT NULL auto_increment,
+`gateway_id` int(10) unsigned NOT NULL,
+`number` varchar(16) NOT NULL,
+`acctcode` varchar(16) NOT NULL,
+`translated` varchar(16) NOT NULL,
+  PRIMARY KEY  (`number_id`),
+  UNIQUE KEY `number` (`number`),
+  KEY `gateway_id` (`gateway_id`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Numbers Table';
+
+ 
+mysql> select * from numbers;
++-----------+------------+------------+----------+------------+
+| number_id | gateway_id | number     | acctcode | translated |
++-----------+------------+------------+----------+------------+
+|         1 |          1 | 0873002769 | 9999     | 1000       |
++-----------+------------+------------+----------+------------+
+1 row in set (0.00 sec)
+
+mysql> select * from gateways;
++------------+--------------+---------+-------+----------------+
+| gateway_id | gateway_ip   | group   | limit | techprofile    |
++------------+--------------+---------+-------+----------------+
+|          1 | 172.30.41.43 | client1 |    50 | sofia/internal |
++------------+--------------+---------+-------+----------------+
+1 row in set (0.00 sec)
+
+INSERT INTO `gateways` VALUES (1,'127.0.0.1','alochym',50,'sofia/internal');
+INSERT INTO `numbers` VALUES (1,1,'0873002769','9999', '1000');
+cac step lam nhu sau
+Buoc 1. tao du lieu tren table gateways. trong do khi goi vao so 0873002769 thi cuoc goi se duoc translate thanh 1000
++ gateway_ip: la IP cua FS hay la IP cua SIP server khac trunking vao FS
++ limit: gioi han bao nhieu cuoc goi tren 1 trunk
+buoc 2. tao du lieu tren table numbers. Trong do gateway_id tren table numbers se duoc tham chieu toi gateway_id cua table gateways
++ techprofile: sofia/internal - dung de goi vao cac extension dang ky vao FS(sofia/internal/1000@172.30.41.117)
++ techprofile: sofia/external - dung de chuyen cuoc goi ra cac trunking khac tren FS(sofia/external/01684099415@sia-HCM1CA146.fpt.net)
 
 
+7: least cost routing:
+edit cac file sau: lcr.conf.xml & switch.conf.xml & db.conf.xml
+ 
+table description
 
+Table: carriers
+Purpose: Defines your carriers
+Field: carrier_name - name of the carrier
+Field: enabled - whether the carrier (thus all it's gateways/lcr entries) are enabled
+
+CREATE TABLE `carriers` (
+  `id` int(11) NOT NULL auto_increment,
+  `carrier_name` varchar(255) default NULL,
+  `enabled` boolean NOT NULL DEFAULT '1',
+   PRIMARY KEY  (`id`)
+   ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
+ 
+ 
+Table: carrier_gateway
+Purpose: Defines gateway information for a given carrier
+Field: carrier_id - maps to carrier
+Field: prefix - the value to put before the phone number after any translation
+Field: suffix - the value to put after the phone number after any translation
+Field: codec - codec to use for absolute_codec_string.  Leave empty/null for default.
+Field: enabled - whether the gateway (thus all it's lcr entries) are enabled
+
+CREATE TABLE `carrier_gateway` (
+  `id` int(11) NOT NULL auto_increment,
+  `carrier_id` int(11) default NULL,
+  `prefix` varchar(255) NOT NULL,
+  `suffix` varchar(255) NOT NULL,
+  `codec` varchar(255) NOT NULL,
+  `enabled` boolean NOT NULL DEFAULT '1',
+  PRIMARY KEY  (`id`),
+  KEY `carrier_id` (`carrier_id`)
+  ) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=latin1;
+ 
+ 
+Table: lcr
+Purpose: Defines rules for a given digit sequence
+Field: digits - matching digits
+Field: rate - rate
+Field: intrastate_rate - rate for intrastate calls
+Field: intralata_rate - rate for intralata calls
+Field: carrier_id - which carrier for this entry
+Field: lead_strip - how many digits to strip off front of passed in number
+Field: trail_strip - how many digits to strip of end of passed in number
+Field: prefix - value to add to front of passed in number
+Field: suffix - vaulue to add to end of passed in number
+Field: lcr_profile - profile_id
+Field: date_start - when this LCR entry becomes valid
+Field: date_end - when this LCR entry becomes invalid
+Field: quality - alternate field to order by
+Field: reliability - alternate field to order by
+Field: cid - regular expression to modify the callers caller id number - channel variables are also valid when called from the dial plan
+Field: enabled - true/false - whether this LCR entry is enabled
+
+CREATE TABLE `lcr` (
+  `id` int(11) NOT NULL auto_increment,
+  `digits` varchar(15) default NULL,
+  `rate` float(11,5) unsigned NOT NULL,
+  `intrastate_rate` float(11, 5) unsigned NOT NULL,
+  `intralata_rate` float(11, 5) unsigned NOT NULL,
+  `carrier_id` int(11) NOT NULL,
+  `lead_strip` int(11) NOT NULL,
+  `trail_strip` int(11) NOT NULL,
+  `prefix` varchar(16) NOT NULL,
+  `suffix` varchar(16) NOT NULL,
+  `lcr_profile` varchar(32) default NULL,
+  `date_start` datetime NOT NULL DEFAULT '1970-01-01',
+  `date_end` datetime NOT NULL DEFAULT '2030-12-31',
+  `quality` float(10,6) NOT NULL,
+  `reliability` float(10,6) NOT NULL,
+  `cid` varchar(32) NOT NULL DEFAULT '',
+  `enabled` boolean NOT NULL DEFAULT '1',
+   PRIMARY KEY  (`id`),
+   KEY `carrier_id` (`carrier_id`),
+   KEY `digits` (`digits`),
+   KEY `lcr_profile` (`lcr_profile`),
+   KEY `rate` (`rate`),
+   KEY `digits_profile_cid_rate` USING BTREE (`digits`,`rate`),
+   CONSTRAINT `carrier_id` FOREIGN KEY (`carrier_id`) REFERENCES `carriers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+   ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+  
+CREATE TABLE npa_nxx_company_ocn (
+   npa smallint NOT NULL,
+   nxx smallint NOT NULL,
+   company_type text,
+   ocn text,
+   company_name text,
+   lata integer,
+   ratecenter text,
+   state text
+   );
+   CREATE UNIQUE INDEX npanxx_idx USING BTREE ON npa_nxx_company_ocn (npa, nxx);
+
+  
+INSERT INTO carriers (id, carrier_name, enabled) VALUES (1, 'fpt', 1);
+INSERT INTO carrier_gateway (id, carrier_id, prefix, suffix) VALUES (1, 1, 'sofia/gateway/fpt/', '');
+INSERT INTO lcr (id, digits, rate, carrier_id, lead_strip, trail_strip, prefix, suffix, date_start, date_end, quality, reliability) VALUES (1, '0', 0.05, 1, 0, 0, "", "", current_timestamp - interval 1 year, current_timestamp + interval 1 year , 0, 0);
+
+mysql> select * from carriers;
++----+--------------+---------+
+| id | carrier_name | enabled |
++----+--------------+---------+
+|  1 | fpt          |       1 |
++----+--------------+---------+
+1 row in set (0.00 sec)
+
+mysql> select * from carrier_gateway;
++----+------------+--------------------+--------+-------+---------+
+| id | carrier_id | prefix             | suffix | codec | enabled |
++----+------------+--------------------+--------+-------+---------+
+|  1 |          1 | sofia/gateway/fpt/ |        |       |       1 |
++----+------------+--------------------+--------+-------+---------+
+1 row in set (0.00 sec)
+
+mysql> select * from lcr;
++----+--------+---------+-----------------+----------------+------------+------------+-------------+--------+--------+-------------+---------------------+---------------------+----------+-------------+-----+---------+-----+
+| id | digits | rate    | intrastate_rate | intralata_rate | carrier_id | lead_strip | trail_strip | prefix | suffix | lcr_profile | date_start          | date_end            | quality  | reliability | cid | enabled | lrn |
++----+--------+---------+-----------------+----------------+------------+------------+-------------+--------+--------+-------------+---------------------+---------------------+----------+-------------+-----+---------+-----+
+|  1 | 0      | 0.05000 |            NULL |           NULL |          1 |          0 |           0 |        |        |           0 | 2011-07-09 04:40:21 | 2013-07-09 04:40:21 | 0.000000 |    0.000000 |     |       1 |   0 |
++----+--------+---------+-----------------+----------------+------------+------------+-------------+--------+--------+-------------+---------------------+---------------------+----------+-------------+-----+---------+-----+
+1 row in set (0.00 sec)
+
+cau hinh de FS dung lcr tren dialplan
+/etc/freeswitch/dialplan/default/01_fpt.xml:
+<include>
+  <extension name="fpt_local">
+    <condition field="${toll_allow}" expression="local"/>
+    <condition field="destination_number" expression="^(\d{8})$">
+      <action application="lcr" data="$0"/>
+      <action application="bridge" data="${lcr_auto_route}"/>
+    </condition>
+  </extension>
+  <extension name="fpt_domestic">
+    <condition field="${toll_allow}" expression="domestic"/>
+    <condition field="destination_number" expression="^(\d{11})$">
+      <action application="lcr" data="$0"/>
+      <action application="bridge" data="${lcr_auto_route}"/>
+    </condition>
+  </extension>
+  <extension name="fpt_international">
+    <condition field="${toll_allow}" expression="international"/>
+    <condition field="destination_number" expression="^(011\d+)$">
+      <action application="lcr" data="$0"/>
+      <action application="bridge" data="${lcr_auto_route}"/>
+    </condition>
+  </extension>
+</include>
 
 
 	
